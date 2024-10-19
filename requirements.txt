@@ -175,3 +175,4 @@ wrapt==1.16.0
 yfinance==0.2.43
 youtube-dl==2021.12.17
 yt-dlp==2024.10.7
+gunicorn
