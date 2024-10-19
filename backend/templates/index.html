@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube to MP3 Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Optional styling for loading indicator */
+        #loading {
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #28a745; /* Green color */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>SIMPLEST MP3 CONVERTER</h1>
+            <div class="button-group">
+                <button class="header-button" onclick="reloadPage()">Home</button>
+                <button class="header-button" onclick="openDialog('About')">About</button>
+                <button class="header-button" onclick="openDialog('Help')">Help</button>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <h1>YouTube to MP3 Converter</h1>
+        <input type="text" id="video-url" placeholder="Enter YouTube video URL" oninput="validateURL()">
+        <div id="bitrate-options" style="display: none;">
+            <button class="bitrate-button" onclick="selectBitrate('128kbps')">128 kbps</button>
+            <button class="bitrate-button" onclick="selectBitrate('192kbps')">192 kbps</button>
+            <button class="bitrate-button" onclick="selectBitrate('320kbps')">320 kbps</button>
+        </div>
+        
+     
+
+        <button id="download-button" style="display: none;" onclick="downloadMp3()">Download MP3</button>
+        <div id="loading">Converting Please wait...</div>
+        <p id="status"></p>
+    </div>
+    <div id="loading" style="display: none;">Converting Please wait...</div>
+
+    <div id="dialog" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeDialog()">&times;</span>
+            <h2 id="dialog-title">Dialog Title</h2>
+            <p id="dialog-message">This is a message for the dialog box.</p>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Function to reload the main page when "Home" is clicked
+        function reloadPage() {
+            location.reload();
+        }
+
+        // Function to open the dialog with specific content based on the title
+        function openDialog(title) {
+            const dialog = document.getElementById('dialog');
+            const dialogTitle = document.getElementById('dialog-title');
+            const dialogMessage = document.getElementById('dialog-message');
+            
+            dialogTitle.textContent = title;
+            
+            switch (title) {
+                case 'About':
+                    dialogMessage.textContent = 'This is a YouTube video to MP3 converter site with a simple and easy-to-use mechanism.';
+                    break;
+                case 'Help':
+                    dialogMessage.textContent = 'CONTACT OWNER: ashishsinghxt@gmail.com';
+                    break;
+                default:
+                    dialogMessage.textContent = 'This is a general message for the dialog box.';
+                    break;
+            }
+
+            dialog.style.display = 'block';
+        }
+
+        // Function to close the dialog
+        function closeDialog() {
+            const dialog = document.getElementById('dialog');
+            dialog.style.display = 'none';
+        }
+
+        // Function to validate the YouTube URL and display bitrate options
+        function validateURL() {
+            const url = document.getElementById('video-url').value;
+            const bitrateOptions = document.getElementById('bitrate-options');
+
+            // Simple validation for a YouTube URL (can be expanded for more accuracy)
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+            if (youtubeRegex.test(url)) {
+                bitrateOptions.style.display = 'block';
+            } else {
+                bitrateOptions.style.display = 'none';
+                document.getElementById('download-button').style.display = 'none';
+            }
+        }
+
+        // Function to handle bitrate selection and show the download button
+        function selectBitrate(bitrate) {
+            const downloadButton = document.getElementById('download-button');
+            downloadButton.textContent = `Download MP3 (${bitrate})`;
+            downloadButton.dataset.bitrate = bitrate; // Store selected bitrate
+            downloadButton.style.display = 'inline-block';
+        }
+
+        // Function to download the MP3 with the selected bitrate
+        function downloadMp3() {
+            const url = document.getElementById('video-url').value;
+            const bitrate = document.getElementById('download-button').dataset.bitrate;
+            const loading = document.getElementById('loading');
+
+            // Show the loading message
+            loading.style.display = 'block';
+            document.getElementById('status').textContent = ''; // Clear previous status
+
+            fetch('/convert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: url, bitrate: bitrate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none'; // Hide loading message after response
+                if (data.success) {
+                    const statusElement = document.getElementById('status');
+                    statusElement.innerHTML = `Conversion successful! <a href="/downloads/${data.file}" download>Download MP3 (${bitrate})</a>`;
+                } else {
+                    document.getElementById('status').textContent = 'Conversion failed. Please try again.';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loading.style.display = 'none'; // Hide loading message on error
+                document.getElementById('status').textContent = 'An error occurred. Please try again.';
+            });
+        }
+    </script>
+</body>
+</html>
