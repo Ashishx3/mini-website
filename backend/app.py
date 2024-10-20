@@ -1,16 +1,8 @@
 from flask import Flask, request, jsonify, send_file, render_template
 import yt_dlp  # Ensure you're using yt-dlp for better compatibility
 import os  # Import os to handle file system operations
-import logging  # Import logging for logging configuration
 
-# Initialize Flask application
 app = Flask(__name__, static_folder='static', template_folder='templates')
-
-# Set up logging configuration
-logging.basicConfig(
-    level=logging.INFO,  # Set the logging level to INFO
-    format='%(asctime)s - %(levelname)s - %(message)s',  # Format for log messages
-)
 
 # Path to save MP3 files
 DOWNLOAD_FOLDER = 'downloads'
@@ -45,28 +37,21 @@ def convert():
             }],
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'quiet': True,
+            'cookiefile': 'cookies.txt'  # Update with the correct path to your cookies.txt
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
             filename = ydl.prepare_filename(info).replace('.webm', '.mp3').replace('.m4a', '.mp3')
 
-        logging.info(f'Successfully converted video: {video_url} to {filename}')
         return jsonify({'success': True, 'file': filename})
     except Exception as e:
-        logging.error(f'Error during conversion: {e}', exc_info=True)  # Log the error with stack trace
-        return jsonify({'success': False, 'message': 'Conversion failed', 'error': str(e)})
+        print(f'Error: {e}')
+        return jsonify({'success': False, 'message': 'Conversion failed', 'error_details': str(e)})
 
-@app.route('/downloads/<path:filename>', methods=['GET'])
+@app.route('/downloads/<filename>', methods=['GET'])
 def download_file(filename):
-    # Sanitize the filename to prevent directory traversal attacks
-    safe_filename = os.path.basename(filename)
-    try:
-        return send_file(os.path.join(DOWNLOAD_FOLDER, safe_filename), as_attachment=True)
-    except FileNotFoundError:
-        logging.error(f'File not found for download: {safe_filename}')
-        return jsonify({'success': False, 'message': 'File not found'}), 404
+    return send_file(f'{DOWNLOAD_FOLDER}/{filename}', as_attachment=True)
 
 if __name__ == '__main__':
-    # Only run the app directly if this script is executed
     app.run(debug=True)
