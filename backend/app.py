@@ -37,7 +37,7 @@ def convert():
             }],
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'quiet': True,
-            'cookiefile': 'cookies.txt'  # Update with the correct path to your cookies.txt
+            'cookiefile': 'cookies.txt'  # Ensure this path is correct
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -55,3 +55,4 @@ def download_file(filename):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
